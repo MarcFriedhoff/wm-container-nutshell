@@ -1,0 +1,6 @@
+wpm
+server/dev/packages/Wm*/
+server/dev/packages/Default/
+server/dev/config
+server/dev/logs
+.env

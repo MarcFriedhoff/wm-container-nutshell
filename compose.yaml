@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  is-dev-server:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
+    image: dev-server
+    container_name: is-dev-server
+    volumes:
+      - ./server:/server
+      - ./license:/license
+    environment:
+      - EXTERNALIZE_PACKAGES=true
+      - HOST_DIR=/server
+      - SERVICE_NAME=dev
+      - SAG_IS_LICENSE_KEY=/license/licenseKey.xml
+    ports:
+      - "5555:5555"
+      - "9999:9999"
+  is-test-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: solution
+      args:
+        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
+    profiles:
+      - test
+    image: solution:1.0.0
+    restart: always
+    container_name: is-test-server
+    volumes:
+      - ./license:/license
+    environment:
+      - SAG_LICENSE_KEY=/license/licenseKey.xml
+    ports:
+      - "5555:5555"
+      - "9999:9999"
+  is-prod-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: solution
+      args:
+        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
+    profiles:
+      - prod
+    image: solution:1.0.0
+    restart: always
+    container_name: is-prod-server
+    volumes:
+      - ./license:/license
+    environment:
+      - SAG_LICENSE_KEY=/license/licenseKey.xml
+    ports:
+      - "5555:5555"
+      - "9999:9999"
