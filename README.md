@@ -33,7 +33,6 @@ This setup should be chosen for production-grade scenarios.
 .
 ├── Dockerfile                              Multistage Dockerfile (for all environments)
 ├── README.md                               This File
-├── build.sh                                Build script to build a docker image from Dockerfile
 ├── compose.yaml                            Docker compose file
 ├── env                                     Environment folder for runtime parameters of environments
 │   ├── dev
@@ -115,10 +114,10 @@ To view logs for a specific environment (container), use the wm.sh logs ```<envi
 
 ## Build
 
-If you prefer to build images before depoying changes to an upper environment, simply call build.sh -i ```<image-name>``` -t ```<image-tag>```
+If you prefer to build images before depoying changes to an upper environment, simply call wm.sh build -i ```<image-name>``` -t ```<image-tag>```
 
 ```bash
-build.sh -i solution-image -t 10.15.0.7-20241031
+wm.sh build -i solution-image -t 10.15.0.7-20241031
 ```
 
 Builds a new image with the name solution-image:10.15.0.7-20241031.
