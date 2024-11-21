@@ -5,13 +5,13 @@ usage() {
     echo "Usage: $0 {install|setup|setcontext|build|start|stop|logs} [arguments]"
     echo
     echo "Commands:"
-    echo "  install <target_dir>    Install the project to the specified target directory."
-    echo "  setup                   Set up the environment."
-    echo "  setcontext <context>    Set the context to the specified value."
-    echo "  build                   Build the project."
-    echo "  start <profile>         Start the services with the specified profile."
-    echo "  stop                    Stop the services."
-    echo "  logs <profile>          View logs for the specified profile."
+    echo "  install <target_dir>               Install the project to the specified target directory."
+    echo "  setup                              Set up the environment."
+    echo "  setcontext <context>               Set the context to the specified value."
+    echo "  build -i <image-name> -t <tag>     Build the project."
+    echo "  start <profile>                    Start the services with the specified profile."
+    echo "  stop <profile>                     Stop the services."
+    echo "  logs <profile>                     View logs for the specified profile."
     exit 1
 }
 
@@ -69,7 +69,7 @@ install() {
     if [ ! -d "$TARGET_DIR" ]; then
         mkdir -p $TARGET_DIR
     fi
-    
+
     # Check if the target directory exists and is empty
     if [ -d "$TARGET_DIR" ] && [ "$(ls -A $TARGET_DIR)" ]; then
         echo "Target directory $TARGET_DIR is not empty."
