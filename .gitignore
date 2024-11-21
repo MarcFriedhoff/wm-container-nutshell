@@ -5,3 +5,5 @@ server/dev/config
 server/dev/logs
 .env
 license/**/*
+
+!env/**/*/.env
