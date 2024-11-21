@@ -4,3 +4,4 @@ server/dev/packages/Default/
 server/dev/config
 server/dev/logs
 .env
+license/**/*
