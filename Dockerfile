@@ -1,4 +1,6 @@
-FROM sagcr.azurecr.io/webmethods-microservicesruntime:10.15.0.8-ubi as wpm
+ARG BASE_IMAGE
+
+FROM $BASE_IMAGE as wpm
 
 # add the WPM package to the image
 ADD --chown=sagadmin:sagadmin wpm /opt/softwareag/wpm

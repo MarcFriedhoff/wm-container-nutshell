@@ -1,64 +1,19 @@
 services:
 
-  is-dev-server:
-    profiles:
-      - dev
+  is-server:
     build:
       context: .
       dockerfile: Dockerfile
-      target: ${PROFILE:-dev}
+      target: ${ENVIRONMENT}
       args:
-        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
-    image: ${IMAGE_NAME:-msr-solution-dev}:${IMAGE_TAG:-latest}
-    container_name: is-dev-server
-    volumes:
-      - ./server:/server
-      - ./license:/license
-    environment:
-      - EXTERNALIZE_PACKAGES=true
+      - EXTERNALIZE_PACKAGES=${EXTERNALIZE_PACKAGES}
       - HOST_DIR=/server
-      - SERVICE_NAME=dev
-      - SAG_IS_LICENSE_FILE=/license/licenseKey.xml
-    ports:
-      - "${IS_MAIN_PORT:-5555}:5555"
-      - "${IS_DIAG_PORT:-9999}:9999"
-
-  is-test-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: ${IMAGE_NAME:-msr-solution}:${IMAGE_TAG:-latest}
-      args:
-        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
-    profiles:
-      - test
-    image: ${IMAGE_NAME:-msr-solution}:${IMAGE_TAG:-latest}
-    restart: always
-    container_name: is-test-server
+      - SERVICE_NAME=${ENVIRONMENT}
+      - SAG_IS_LICENSE_FILE=/license/${SAG_IS_LICENSE_FILE:-licenseKey.xml}
+    image: ${IMAGE_NAME:-msr-solution-dev}:${IMAGE_TAG:-latest}
     volumes:
       - ./license:/license
-    environment:
-      - SAG_IS_LICENSE_FILE=/license/licenseKey.xml
-    ports:
-      - "${IS_MAIN_PORT:-5555}:5555"
-      - "${IS_DIAG_PORT:-9999}:9999"
-
-  is-prod-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: ${IMAGE_NAME:-msr-solution}:${IMAGE_TAG:-latest}
-      args:
-        WPM_ACCESS_TOKEN: ${PACKAGES_TOKEN}
-    profiles:
-      - prod
-    image: ${IMAGE_NAME:-msr-solution}:${IMAGE_TAG:-latest}
-    restart: always
-    container_name: is-prod-server
-    volumes:
-      - ./license:/license
-    environment:
-      - SAG_IS_LICENSE_FILE=/license/licenseKey.xml
+      - ./server:/server
     ports:
       - "${IS_MAIN_PORT:-5555}:5555"
       - "${IS_DIAG_PORT:-9999}:9999"

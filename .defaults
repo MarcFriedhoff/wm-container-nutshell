@@ -1,0 +1,7 @@
+DOCKER="podman"
+DOCKER_COMPOSE="podman compose"
+CONTAINER_REGISTRY="sagcr.azurecr.io"
+BASE_IMAGE="sagcr.azurecr.io/webmethods-microservicesruntime:10.15.0.8-ubi"
+
+UP_ARGS="-d"
+BUILD_ARGS="--build-arg WPM_ACCESS_TOKEN=${PACKAGES_TOKEN} --build-arg BASE_IMAGE=${BASE_IMAGE}"

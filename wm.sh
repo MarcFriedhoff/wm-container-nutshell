@@ -1,21 +1,32 @@
 #!/bin/sh
 
-# Function to display usage
 usage() {
-    echo "Usage: $0 {install|setup|setcontext|build|start|stop|logs} [arguments]"
+    echo -e "             _    __  __     _   _            _                            "
+    echo -e " __ __ _____| |__|  \\/  |___| |_| |_  ___  __| |___                        "
+    echo -e " \\ V  V / -_) '_ \\ |\\/| / -_)  _| ' \\/ _ \\/ _\` (_-<                        "
+    echo -e "  \\_/\\_/\\___|_.__/_|  |_\\___|\\__|_||_\\___/\\__,_/__/_         _        _ _  "
+    echo -e "  / __|___ _ _| |_ __ _(_)_ _  ___ _ _  | \\| |_  _| |_ _____| |_  ___| | | "
+    echo -e " | (__/ _ \\ ' \\  _/ _\` | | ' \\/ -_) '_| | .\` | || |  _|_ (_-< ' \\/ -_) | | "
+    echo -e "  \\___\\___/_||_\\__\\__,_|_|_||_\\___|_|   |_|\\_\\_,_|\\__/__/__/_||_\\___|_|_| "                                                                       
     echo
+    echo "A simple script to install and manage webMethods containerized solutions."
+    echo 
+    echo "Usage: $0 {install|setup|<compose command>} [arguments]"
+    echo 
     echo "Commands:"
     echo "  install <target_dir>               Install the project to the specified target directory."
     echo "  setup                              Set up the environment."
-    echo "  setcontext <context>               Set the context to the specified value."
-    echo "  build -i <image-name> -t <tag>     Build the project."
-    echo "  start <profile>                    Start the services with the specified profile."
-    echo "  stop <profile>                     Stop the services."
-    echo "  logs <profile>                     View logs for the specified profile."
+    echo
+    echo "Compose Commands:"
+    docker-compose --help | sed -n '/Commands:/,$p' | sed '1d;$d' | sed 's/^[ \t]*//' | while read -r line; do
+        first_word=${line%% *}
+        rest_of_line=${line#* }
+        rest_of_line=$(echo "$rest_of_line" | sed 's/^[ \t]*//')
+        printf "  %-8s %-10s %s\n" "$first_word" "<environment>" "$rest_of_line"
+    done
     exit 1
 }
 
-# Function to display help for a specific command
 command_help() {
     case "$1" in
         install)
@@ -25,26 +36,6 @@ command_help() {
         setup)
             echo "Usage: $0 setup"
             echo "Set up the environment."
-            ;;
-        setcontext)
-            echo "Usage: $0 setcontext <context>"
-            echo "Set the context to the specified value."
-            ;;
-        build)
-            echo "Usage: $0 build -i <image-name> -t <image-version>"
-            echo "Build the project."
-            ;;
-        start)
-            echo "Usage: $0 start <profile>"
-            echo "Start the services with the specified profile."
-            ;;
-        stop)
-            echo "Usage: $0 stop <profile>"
-            echo "Stop the services with the specified profile."
-            ;;
-        logs)
-            echo "Usage: $0 logs <profile>"
-            echo "View logs for the specified profile."
             ;;
         *)
             usage
@@ -75,9 +66,6 @@ install() {
         echo "Target directory $TARGET_DIR is not empty."
         exit 1
     fi
-
-
-
 
     echo "Installing project to $TARGET_DIR..."
     # Add installation logic here
@@ -137,12 +125,12 @@ setup() {
     fi
 
     # Prompt for containers.webmethods.io user and token if not already set
-    if [ -z "$CONTAINER_USER" ]; then
-        read -p "Enter containers.webmethods.io user: " CONTAINER_USER
+    if [ -z "$CONTAINERS_USER" ]; then
+        read -p "Enter containers.webmethods.io user: " CONTAINERS_USER
     fi
 
-    if [ -z "$CONTAINER_TOKEN" ]; then
-        read -sp "Enter containers.webmethods.io token: " CONTAINER_TOKEN
+    if [ -z "$CONTAINERS_TOKEN" ]; then
+        read -sp "Enter containers.webmethods.io token: " CONTAINERS_TOKEN
         echo
     fi
 
@@ -154,237 +142,113 @@ setup() {
 
     # Store the information in a .env file
     cat <<EOF > .env
-CONTAINER_USER=$CONTAINER_USER
-CONTAINER_TOKEN=$CONTAINER_TOKEN
+CONTAINERS_USER=$CONTAINERS_USER
+CONTAINERS_TOKEN=$CONTAINERS_TOKEN
 PACKAGES_TOKEN=$PACKAGES_TOKEN
-COMMAND_CLI=podman
 EOF
 
     echo ".env file created/updated successfully."
 
 }
 
-# Function to set context
-setcontext() {
-    if [ "$1" = "--help" ]; then
-        command_help setcontext
+init() {
+
+    # read .defaults env variables
+    if [ -f .defaults ]; then
+        . ./.defaults
+    else
+        echo ".defaults file not found."
     fi
 
-    CONTEXT=$1
-    if [ -z "$CONTEXT" ]; then
-        echo "Context not specified."
-        command_help setcontext
-    fi
-    echo "Setting context to $CONTEXT..."
-
-    # check if argument for profile is provided
-    if [ -z "$1" ]; then
-        command_help setcontext
-    fi
-
-    PROFILE=$1
-
-    # Check if .env file exists
-    if [ ! -f .env ]; then
-        echo ".env file does not exist, please run setup.sh first."
-        exit 1
-    fi
-
-    # Source the .env file to export variables
-    set -a
-    . ./.env
-    set +a
-
-    if [ -f env/$CONTEXT/.env ]; then
+    # Check if the .env file exists
+    if [ -f .env ]; then
+        echo ".env file found. Exporting variables..."
         set -a
-        . env/$CONTEXT/.env
+        . ./.env
         set +a
     else
-        echo ".env file not found for target profile (env/$CONTEXT/.env)."
+        echo ".env file not found. Please run the setup command to set up the environment."
         exit 1
     fi
 
-    echo "Context set for profile $CONTEXT"
-}
-
-# Function to build the project
-build() {
-    if [ "$1" = "--help" ]; then
-        command_help build
-    fi
-
-    # Add build logic here
-    echo "Build a solution image"
-
-    # get arguments for -image and -tag
-    while getopts i:t: flag
-    do
-        case "${flag}" in
-            i) SOLUTION_IMAGE_NAME=${OPTARG};;
-            t) SOLUTION_IMAGE_VERSION=${OPTARG};;
-        esac
-    done
-
-    # Check if SOLUTION_IMAGE_NAME and SOLUTION_IMAGE_VERSION are set
-    if [ -z "$SOLUTION_IMAGE_NAME" ] || [ -z "$SOLUTION_IMAGE_VERSION" ]; then
-        command_help build
-    fi
-
-    # Check if .env file exists
-    if [ ! -f .env ]; then
-        echo ".env file does not exist, please run setup.sh first."
-        exit 1
-    fi
-
-    # Source the .env file to export variables
-    set -a
-    . ./.env
-    set +a
-
-    $CLI_COMMAND build . --build-arg WPM_ACCESS_TOKEN=${PACKAGES_TOKEN} -t $SOLUTION_IMAGE_NAME:$SOLUTION_IMAGE_VERSION
-}
-
-# Function to start the services
-start() {
-    if [ "$1" = "--help" ]; then
-        command_help start
-    fi
-
-    PROFILE=$1
-    if [ -z "$PROFILE" ]; then
-        echo "Profile not specified."
-        usage
-    fi
-    echo "Starting services with profile $PROFILE..."
-    # Add start logic here
-
-    # Check if .env file exists
-    if [ ! -f .env ]; then
-        echo ".env file does not exist, please run setup.sh first."
-        exit 1
-        fi
-
-    # Source the .env file to export variables
-    set -a
-    . ./.env
-    set +a
-
-    # Authenticate with Docker using CONTAINERS_USER and CONTAINERS_TOKEN
-    $CLI_COMMAND login sagcr.azurecr.io -u "$CONTAINERS_USER" -p "$CONTAINERS_TOKEN"
-    if [ $? -ne 0 ]; then
-        echo "Docker login failed. Please check your credentials."
-        exit 1
-    fi
-
-    # Check if a profile is provided as the first argument
-    if [ -z "$1" ]; then
-        echo "No profile specified. Usage: ./start.sh <profile>"
-        exit 1
-    fi
-
-    PROFILE=$1
+    ENVIRONMENT=$1
 
     # read image name and version from image file in env folder
-    if [ -f env/$PROFILE/.env ]; then
+    if [ -f env/$ENVIRONMENT/.env ]; then
         set -a
-        . env/$PROFILE/.env
+        . env/$ENVIRONMENT/.env
         set +a
     else
-        echo ".env file not found for target profile (env/$PROFILE/.env )."
+        echo ".env file not found for target environment (env/$ENVIRONMENT/.env )."
         exit 1
     fi
 
-    # Run docker-compose up in detached mode with the specified profile
-    PACKAGES_TOKEN=$PACKAGES_TOKEN $CLI_COMMAND compose --profile $PROFILE up -d
 }
 
-# Function to stop the services
-stop() {
-    if [ "$1" = "--help" ]; then
-        command_help stop
-    fi
 
-    echo "Stopping services..."
-    # Add stop logic here
-    # check if argument for profile is provided
+
+dockercompose() {
+
+
+    # Check if the command is provided
     if [ -z "$1" ]; then
-        echo "No profile specified. Usage: ./stop.sh <profile>"
-        exit 1
-    fi
-
-    PROFILE=$1
-
-    # Check if .env file exists
-
-    if [ ! -f .env ]; then
-        echo ".env file does not exist, please run setup.sh first."
-        exit 1
-    fi
-
-    # Source the .env file to export variables
-    set -a
-    . ./.env
-    set +a
-
-    if [ -f env/$PROFILE/.env ]; then
-        set -a
-        . env/$PROFILE/.env
-        set +a
-    else
-        echo ".env file not found for target profile (env/$PROFILE/.env)."
-        exit 1
-    fi
-
-
-    # stop container via docker-compose and PROFILE
-    $CLI_COMMAND compose --profile $PROFILE down
-}
-
-# Function to view logs
-logs() {
-    if [ "$1" = "--help" ]; then
-        command_help logs
-    fi
-
-    PROFILE=$1
-    if [ -z "$PROFILE" ]; then
-        echo "Profile not specified."
         usage
     fi
-    echo "Viewing logs for profile $PROFILE..."
 
-    . ./.env
+    # Check if the environment is provided
+    if [ -z "$2" ]; then
+        usage
+    fi
 
-    $CLI_COMMAND compose logs is-$1-server -f
+    init $2
+
+    # if command is "build" make a docker login
+    if [ "$1" = "build" ]; then
+        $DOCKER login $CONTAINER_REGISTRY -u "$CONTAINERS_USER" -p "$CONTAINERS_TOKEN"
+    fi
+
+    COMMAND=$1
+    ENVIRONMENT=$2
+
+    echo "Running docker-compose command: $COMMAND for environment: $ENVIRONMENT"
+
+    # Source the .defaults file to get default arguments
+    if [ -f .defaults ]; then
+        . ./.defaults
+    fi
+
+    # Convert COMMAND to uppercase
+    COMMAND_UPPER=$(echo "$COMMAND" | tr '[:lower:]' '[:upper:]')
+
+    # Determine the default arguments for the command
+    DEFAULT_ARGS_VAR="${COMMAND_UPPER}_ARGS"
+    DEFAULT_ARGS=${!DEFAULT_ARGS_VAR}
+
+    echo "Environment: $ENVIRONMENT"
+
+    # Shift the first 2 arguments (environment and command) and pass the rest to docker-compose
+    shift 2
+    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE --project-name $ENVIRONMENT -f compose.yaml $COMMAND $DEFAULT_ARGS "$@"
 }
 
-# Main script logic
-COMMAND=$1
-shift
+# check if "install" command is provided
+if [ "$1" = "install" ]; then
+    install $2
+    exit 0
+fi
 
-case "$COMMAND" in
-    install)
-        install "$@"
-        ;;
-    setup)
-        setup "$@"
-        ;;
-    setcontext)
-        setcontext "$@"
-        ;;
-    build)
-        build "$@"
-        ;;
-    start)
-        start "$@"
-        ;;
-    stop)
-        stop "$@"
-        ;;
-    logs)
-        logs "$@"
-        ;;
-    *)
-        usage
-        ;;
-esac
+# check if "setup" command is provided
+if [ "$1" = "setup" ]; then
+    setup
+    exit 0
+fi
+
+# check if a environment is provided and a compose-$2.yaml file exists
+if [ -n "$2" ]; then
+    
+    dockercompose "$@"
+    exit 0
+
+else
+    usage
+fi

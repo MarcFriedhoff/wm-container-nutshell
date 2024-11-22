@@ -33,7 +33,10 @@ This setup should be chosen for production-grade scenarios.
 .
 ├── Dockerfile                              Multistage Dockerfile (for all environments)
 ├── README.md                               This File
-├── compose.yaml                            Docker compose file
+├── compose.yaml                            Base Docker compose file
+├── compose-dev.yaml                        Docker compose file for dev
+├── compose-prod.yaml                       Docker compose file for prod
+├── compose-test.yaml                       Docker compose file for test
 ├── env                                     Environment folder for runtime parameters of environments
 │   ├── dev
 │   ├── prod
@@ -114,10 +117,10 @@ To view logs for a specific environment (container), use the wm.sh logs ```<envi
 
 ## Build
 
-If you prefer to build images before depoying changes to an upper environment, simply call wm.sh build -i ```<image-name>``` -t ```<image-tag>```
+If you prefer to build images before depoying changes to an upper environment, simply call wm.sh build <environment>
 
 ```bash
-wm.sh build -i solution-image -t 10.15.0.7-20241031
+wm.sh build dev
 ```
 
 Builds a new image with the name solution-image:10.15.0.7-20241031.
@@ -130,11 +133,11 @@ By default, when you run:
 wm.sh start <environment>
 ```
 
-Docker compose will start building an image if it is not presen and use the image and image tag as present in the ```env/<environment>/image``` file:
+Docker compose will start building an image if it is not presen and use the image and image tag as present in the ```env/<environment>/.env``` file:
 
 ```properties
-IMAGE=msr-solution
-TAG=latest
+IMAGE_NAME=msr-solution-dev
+IMAGE_TAG=latest
 ```
 
 Change this if required to the desired image and image tag as defined in the build step above. 
