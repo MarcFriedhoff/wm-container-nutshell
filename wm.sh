@@ -69,7 +69,11 @@ install() {
 
     echo "Installing project to $TARGET_DIR..."
     # Add installation logic here
+    # Enable dotglob to include hidden files
+    shopt -s dotglob
     cp -r ./* $TARGET_DIR
+    # Disable dotglob
+    shopt -u dotglob
 
     echo "Solution installed successfully to $TARGET_DIR. You should now make all changes in the target folder and ideally commit the changes to a version control system."
     echo "For git users, you can run the following commands to initialize a git repository and commit the changes:"
