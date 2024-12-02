@@ -18,13 +18,28 @@ usage() {
     echo "  setup                              Set up the environment."
     echo
     echo "Compose Commands:"
-    docker-compose --help | sed -n '/Commands:/,$p' | sed '1d;$d' | sed 's/^[ \t]*//' | while read -r line; do
+    compose --help | sed -n '/Commands:/,$p' | sed '1d;$d' | sed 's/^[ \t]*//' | while read -r line; do
         first_word=${line%% *}
         rest_of_line=${line#* }
         rest_of_line=$(echo "$rest_of_line" | sed 's/^[ \t]*//')
         printf "  %-8s %-10s %s\n" "$first_word" "<environment>" "$rest_of_line"
     done
     exit 1
+}
+
+compose() {
+    # check if .defaults env variables
+    set -a
+    . ./.defaults
+    set +a
+
+    # check docker-compose command exists
+    if [ -z "$DOCKER_COMPOSE" ]; then
+        echo "docker-compose command not found. Please install $DOCKER_COMPOSE."
+        exit 1
+    fi
+
+    $DOCKER_COMPOSE "$@"
 }
 
 command_help() {
@@ -157,6 +172,18 @@ EOF
 
 init() {
 
+    # check if environment exists
+    if [ -z "$1" ]; then
+        echo "Environment not provided."
+        usage
+    fi
+
+    # check if environment folder exists
+    if [ ! -d env/$1 ]; then
+        echo "Environment folder not found."
+        exit 1
+    fi
+
     # read .defaults env variables
     if [ -f .defaults ]; then
         . ./.defaults
@@ -232,7 +259,7 @@ dockercompose() {
 
     # Shift the first 2 arguments (environment and command) and pass the rest to docker-compose
     shift 2
-    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE --project-name $ENVIRONMENT -f compose.yaml $COMMAND $DEFAULT_ARGS "$@"
+    ENVIRONMENT=$ENVIRONMENT compose --project-name $ENVIRONMENT -f compose.yaml $COMMAND $DEFAULT_ARGS "$@"
 }
 
 # check if "install" command is provided

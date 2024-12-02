@@ -4,9 +4,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: ${ENVIRONMENT}
-      args:
-      - EXTERNALIZE_PACKAGES=${EXTERNALIZE_PACKAGES}
+      target: ${TARGET:-dev}
+    environment:
+      - EXTERNALIZE_PACKAGES=${EXTERNALIZE_PACKAGES:-true}
       - HOST_DIR=/server
       - SERVICE_NAME=${ENVIRONMENT}
       - SAG_IS_LICENSE_FILE=/license/${SAG_IS_LICENSE_FILE:-licenseKey.xml}
@@ -17,3 +17,5 @@ services:
     ports:
       - "${IS_MAIN_PORT:-5555}:5555"
       - "${IS_DIAG_PORT:-9999}:9999"
+
+    
